@@ -140,7 +140,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
                 '-profile:v', 'main', '-preset', 'fast',
                 '-sc_threshold', '0',
                 '-g', '48', '-keyint_min', '48',
-                '-hls_time', '4',
+                '-hls_time', '10',
                 '-hls_playlist_type', 'vod',
                 '-hls_segment_filename', os.path.join(quality_dir, 'segment_%03d.ts'),
                 output_file
