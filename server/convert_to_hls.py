@@ -82,8 +82,8 @@ def update_video_segments(db, video_id, quality, segment_dir):
 def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
     """Chuyển đổi video sang định dạng HLS"""
     # Kết nối MongoDB
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client['video_platform']
+    client = MongoClient('mongodb+srv://Death:DeathA_1205@death.8wudq.mongodb.net/CoLy2?retryWrites=true&w=majority&appName=Death')
+    db = client['CoLy2']
     videos_collection = db['videos']
     
     # Cập nhật trạng thái trong MongoDB
@@ -195,6 +195,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
         )
         
         print(f"Chuyển đổi thành công: {video_path} -> {output_dir}")
+        os.remove(video_path)
         
     except Exception as e:
         # Cập nhật trạng thái lỗi

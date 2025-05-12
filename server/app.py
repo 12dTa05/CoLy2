@@ -255,7 +255,7 @@ def upload_video():
     # Bắt đầu quá trình chuyển đổi HLS (không đồng bộ)
     # Trong thực tế, bạn nên sử dụng hàng đợi công việc như Celery
     subprocess.Popen([
-        'python', 'convert_to_hls.py', 
+        '/home/death/miniconda3/envs/CoLy/bin/python3.12', 'convert_to_hls.py', 
         '--video_path', original_path,
         '--output_dir', os.path.join(HLS_FOLDER, video_id),
         '--thumbnail_path', os.path.join(THUMBNAILS_FOLDER, f"{video_id}.jpg"),

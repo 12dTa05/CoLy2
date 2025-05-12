@@ -53,12 +53,13 @@ const VideoPlayer = () => {
       hlsRef.current.destroy();
     }
     
-    const hlsUrl = getHLSUrl(video.contentPath + '/master.m3u8');
+    const contentPath = video.contentPath.endsWith('/') ? video.contentPath.slice(0, -1) : video.contentPath;
+    const hlsUrl = getHLSUrl(contentPath + '/master.m3u8');
     
     if (Hls.isSupported()) {
       const hls = new Hls({
         maxLoadingDelay: 4,
-        maxMaxBufferLength: 30,
+        maxBufferLength: 30,
         liveSyncDuration: 3,
         liveMaxLatencyDuration: 10,
       });
