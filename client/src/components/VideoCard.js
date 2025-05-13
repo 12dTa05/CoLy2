@@ -12,21 +12,23 @@ const VideoCard = ({ video }) => {
     const now = new Date();
     const date = new Date(dateString);
     const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 0) return 'Vừa tải lên';
     
     let interval = Math.floor(seconds / 31536000); // Số giây trong năm
-    if (interval > 1) return `${interval} năm trước`;
+    if (interval >= 1) return `${interval} năm trước`;
     
     interval = Math.floor(seconds / 2592000); // Số giây trong tháng
-    if (interval > 1) return `${interval} tháng trước`;
+    if (interval >= 1) return `${interval} tháng trước`;
     
     interval = Math.floor(seconds / 86400); // Số giây trong ngày
-    if (interval > 1) return `${interval} ngày trước`;
+    if (interval >= 1) return `${interval} ngày trước`;
     
     interval = Math.floor(seconds / 3600); // Số giây trong giờ
-    if (interval > 1) return `${interval} giờ trước`;
+    if (interval >= 1) return `${interval} giờ trước`;
     
     interval = Math.floor(seconds / 60); // Số giây trong phút
-    if (interval > 1) return `${interval} phút trước`;
+    if (interval >= 1) return `${interval} phút trước`;
     
     return `${Math.floor(seconds)} giây trước`;
   };

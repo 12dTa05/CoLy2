@@ -49,6 +49,10 @@ export const uploadVideo = (formData, onUploadProgress) => {
   });
 };
 
+export const getVideoStatus = (videoId) => {
+  return api.get(`/videos/${videoId}/status`);
+};
+
 export const getMyVideos = (page = 1, limit = 10) => {
   return api.get(`/videos/my?page=${page}&limit=${limit}`);
 };

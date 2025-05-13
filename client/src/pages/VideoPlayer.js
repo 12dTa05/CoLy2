@@ -21,6 +21,7 @@ const VideoPlayer = () => {
   const [error, setError] = useState('');
   const [comment, setComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
@@ -34,6 +35,7 @@ const VideoPlayer = () => {
         setVideo(response.data.video);
         setUploader(response.data.uploader);
         setComments(response.data.comments);
+        setIsOwner(response.data.isOwner);
       } catch (err) {
         setError(err.response?.data?.message || 'Không thể tải thông tin video');
       } finally {
@@ -188,7 +190,7 @@ const VideoPlayer = () => {
           
           <div className="d-flex align-items-center mb-3">
             <FaEye className="me-1 text-secondary" />
-            <span className="me-3 text-secondary">{video.stats.views} lượt xem</span>
+            <span className="me-3 text-secondary">{Math.ceil(video.stats.views)} lượt xem</span>
             
             <FaCalendarAlt className="me-1 text-secondary" />
             <span className="me-3 text-secondary">

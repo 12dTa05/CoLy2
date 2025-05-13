@@ -1,11 +1,11 @@
 // UploadVideo.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Form, Button, Card, Alert, ProgressBar, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaUpload, FaVideo } from 'react-icons/fa';
 
-import { uploadVideo } from '../api';
+import { uploadVideo, getVideoStatus } from '../api';
 
 const CATEGORIES = [
   'Giáo dục',
@@ -30,8 +30,15 @@ const UploadVideo = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedVideoId, setUploadedVideoId] = useState(null);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStep, setProcessingStep] = useState('');
+  const [processingComplete, setProcessingComplete] = useState(false);
+  const [processingError, setProcessingError] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const statusCheckInterval = useRef(null);
   
   const navigate = useNavigate();
 
@@ -41,7 +48,7 @@ const UploadVideo = () => {
       // Kiểm tra định dạng file
       const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
       if (!validTypes.includes(selectedFile.type)) {
-        setError('Định dạng video không được hỗ trợ. Hãy sử dụng MP4, WebM, MOV, AVI hoặc MKV.');
+        setError('Định dạng video không được hỗ trợ. Hãy sử dụng MP4.');
         setFile(null);
         e.target.value = null;
         return;
@@ -67,6 +74,48 @@ const UploadVideo = () => {
       }
     }
   };
+
+  const checkVideoStatus = async () => {
+    if (!uploadedVideoId) return;
+    
+    try {
+      const response = await getVideoStatus(uploadedVideoId);
+      const { statusInfo } = response.data;
+      
+      setProcessingProgress(statusInfo.progress);
+      setProcessingStep(statusInfo.currentStep);
+      
+      if (statusInfo.status === 'ready') {
+        setProcessingComplete(true);
+        clearInterval(statusCheckInterval.current);
+        toast.success('Video đã sẵn sàng để xem!');
+      } else if (statusInfo.status === 'error') {
+        setProcessingError(statusInfo.error || 'Đã xảy ra lỗi khi xử lý video');
+        clearInterval(statusCheckInterval.current);
+        toast.error('Xử lý video thất bại');
+      }
+    } catch (err) {
+      console.error('Lỗi khi kiểm tra trạng thái video:', err);
+    }
+  };
+  
+  // Bắt đầu kiểm tra khi có ID video đã tải lên
+  useEffect(() => {
+    if (uploadedVideoId && !processingComplete) {
+      // Kiểm tra ngay lập tức
+      checkVideoStatus();
+      
+      // Thiết lập kiểm tra định kỳ (3 giây/lần)
+      statusCheckInterval.current = setInterval(checkVideoStatus, 3000);
+    }
+    
+    // Dọn dẹp interval khi component unmount
+    return () => {
+      if (statusCheckInterval.current) {
+        clearInterval(statusCheckInterval.current);
+      }
+    };
+  }, [uploadedVideoId, processingComplete]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -166,7 +215,6 @@ const UploadVideo = () => {
                         onChange={(e) => setVisibility(e.target.value)}
                       >
                         <option value="public">Công khai</option>
-                        <option value="unlisted">Không công khai</option>
                         <option value="private">Riêng tư</option>
                       </Form.Select>
                     </Form.Group>
@@ -201,7 +249,7 @@ const UploadVideo = () => {
                         <div>
                           <FaUpload size={60} className="text-primary mb-3" />
                           <h5>Chọn video để tải lên</h5>
-                          <p className="text-secondary">Hỗ trợ định dạng MP4, WebM, MOV, AVI, MKV</p>
+                          <p className="text-secondary">Hỗ trợ định dạng MP4</p>
                         </div>
                       )}
                     </div>

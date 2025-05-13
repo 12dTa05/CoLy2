@@ -177,11 +177,11 @@ const MyVideos = () => {
             <Alert variant="info" className="mt-3">Không có video nào đang xử lý.</Alert>
           )}
         </Tab>
-        <Tab eventKey="ready" title="Đã sẵn sàng">
+        {/* <Tab eventKey="ready" title="Đã sẵn sàng">
           {filteredVideos.length === 0 && (
             <Alert variant="info" className="mt-3">Không có video nào đã sẵn sàng.</Alert>
           )}
-        </Tab>
+        </Tab> */}
         <Tab eventKey="public" title="Công khai">
           {filteredVideos.length === 0 && (
             <Alert variant="info" className="mt-3">Không có video nào được công khai.</Alert>
@@ -259,12 +259,9 @@ const MyVideos = () => {
                     )}
                     {video.status === 'ready' && (
                       <>
-                        <span className="badge bg-success mb-1 d-block">Đã sẵn sàng</span>
+                        {/* <span className="badge bg-success mb-1 d-block">Đã sẵn sàng</span> */}
                         {video.visibility === 'public' && (
                           <span className="badge bg-primary">Công khai</span>
-                        )}
-                        {video.visibility === 'unlisted' && (
-                          <span className="badge bg-secondary">Không công khai</span>
                         )}
                         {video.visibility === 'private' && (
                           <span className="badge bg-dark">Riêng tư</span>
@@ -287,7 +284,7 @@ const MyVideos = () => {
                         <FaEllipsisV />
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item as={Link} to={`/video/${video._id}`}>Xem video</Dropdown.Item>
+                        {/* <Dropdown.Item as={Link} to={`/video/${video._id}`}>Xem video</Dropdown.Item> */}
                         <Dropdown.Item disabled={video.status !== 'ready'}>Chỉnh sửa</Dropdown.Item>
                         <Dropdown.Item disabled={video.status !== 'ready'}>Sao chép liên kết</Dropdown.Item>
                         <Dropdown.Divider />

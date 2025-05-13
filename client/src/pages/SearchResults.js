@@ -222,7 +222,7 @@ const SearchResults = () => {
   return (
     <div>
       {/* Thanh tìm kiếm */}
-      <Form onSubmit={handleSearch} className="mb-4">
+      {/* <Form onSubmit={handleSearch} className="mb-4">
         <InputGroup>
           <Form.Control
             placeholder="Tìm kiếm video..."
@@ -233,7 +233,7 @@ const SearchResults = () => {
             <FaSearch /> Tìm kiếm
           </Button>
         </InputGroup>
-      </Form>
+      </Form> */}
       
       {/* Bộ lọc */}
       <Card className="mb-4">

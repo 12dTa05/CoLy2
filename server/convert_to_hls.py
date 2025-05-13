@@ -51,33 +51,7 @@ def generate_thumbnail(video_path, thumbnail_path):
         print(f"Lỗi khi tạo thumbnail: {e}")
         return False
 
-def update_video_segments(db, video_id, quality, segment_dir):
-    """Cập nhật thông tin các phân đoạn video trong cơ sở dữ liệu"""
-    video_segments_collection = db['video_segments']
-    
-    # Xóa các phân đoạn cũ của video với chất lượng tương tự (nếu có)
-    video_segments_collection.delete_many({
-        'videoId': ObjectId(video_id),
-        'quality': quality
-    })
-    
-    # Lấy danh sách các file phân đoạn
-    segments = [f for f in os.listdir(segment_dir) if f.endswith('.ts')]
-    
-    # Thêm thông tin các phân đoạn mới
-    for i, segment in enumerate(sorted(segments)):
-        segment_path = os.path.join(segment_dir, segment)
-        size = os.path.getsize(segment_path)
-        
-        # Lưu thông tin phân đoạn
-        video_segments_collection.insert_one({
-            'videoId': ObjectId(video_id),
-            'quality': quality,
-            'segmentPath': segment_path,
-            'sequence': i,
-            'size': size,
-            'createdAt': datetime.datetime.now()
-        })
+# Loại bỏ hàm update_video_segments vì không còn sử dụng
 
 def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
     """Chuyển đổi video sang định dạng HLS"""
@@ -91,7 +65,12 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
         {'_id': ObjectId(video_id)},
         {'$set': {
             'status': 'processing',
-            'processingDetails.progress': 0
+            'processingDetails': {
+                'progress': 0,
+                'currentStep': 'Bắt đầu xử lý',
+                'error': None,
+                'quality': []
+            }
         }}
     )
     
@@ -123,7 +102,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
             ('1080p', '1920x1080', '5000k', '256k')
         ]
         
-        quality_list = []
+        quality_info = []  # Thay thế quality_list bằng danh sách chi tiết hơn
         progress_step = 80 / len(resolutions)  # 80% cho quá trình chuyển đổi
         
         for i, (name, res, v_bitrate, a_bitrate) in enumerate(resolutions):
@@ -140,7 +119,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
                 '-profile:v', 'main', '-preset', 'fast',
                 '-sc_threshold', '0',
                 '-g', '48', '-keyint_min', '48',
-                '-hls_time', '10',
+                '-hls_time', '4',
                 '-hls_playlist_type', 'vod',
                 '-hls_segment_filename', os.path.join(quality_dir, 'segment_%03d.ts'),
                 output_file
@@ -150,9 +129,20 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
             process.communicate()
             
             if process.returncode == 0:
-                quality_list.append(name)
-                # Cập nhật thông tin phân đoạn
-                update_video_segments(db, video_id, name, quality_dir)
+                # Thêm thông tin chi tiết về thư mục segments
+                segment_files = [f for f in os.listdir(quality_dir) if f.endswith('.ts')]
+                total_size = sum(os.path.getsize(os.path.join(quality_dir, f)) for f in segment_files)
+                segment_count = len(segment_files)
+                
+                quality_info.append({
+                    'name': name,
+                    'relativePath': os.path.join(os.path.basename(output_dir), name),
+                    'segmentCount': segment_count,
+                    'totalSize': total_size,
+                    'resolution': res,
+                    'videoBitrate': v_bitrate,
+                    'audioBitrate': a_bitrate
+                })
             
             # Cập nhật tiến trình
             current_progress = 10 + (i + 1) * progress_step
@@ -160,7 +150,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
                 {'_id': ObjectId(video_id)},
                 {'$set': {
                     'processingDetails.progress': current_progress,
-                    'processingDetails.quality': quality_list
+                    'processingDetails.quality': quality_info
                 }}
             )
         
@@ -171,7 +161,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
             f.write("#EXT-X-VERSION:3\n")
             
             for name, res, v_bitrate, a_bitrate in resolutions:
-                if name in quality_list:
+                if any(q['name'] == name for q in quality_info):
                     # Lấy giá trị bandwidth từ bitrate
                     video_bw = int(v_bitrate.replace('k', '')) * 1000
                     audio_bw = int(a_bitrate.replace('k', '')) * 1000
@@ -189,13 +179,17 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
             {'$set': {
                 'status': 'ready',
                 'processingDetails.progress': 100,
-                'processingDetails.quality': quality_list,
+                'processingDetails.quality': quality_info,
                 'publishedAt': datetime.datetime.now()
             }}
         )
         
+        # Xóa file gốc sau khi chuyển đổi thành công
+        if os.path.exists(video_path):
+            os.remove(video_path)
+            print(f"Đã xóa file gốc: {video_path}")
+        
         print(f"Chuyển đổi thành công: {video_path} -> {output_dir}")
-        os.remove(video_path)
         
     except Exception as e:
         # Cập nhật trạng thái lỗi

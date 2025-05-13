@@ -226,7 +226,7 @@ def upload_video():
         'processingDetails': {
             'progress': 0,
             'error': None,
-            'quality': []
+            'quality': []  # Sẽ được cập nhật với thông tin chi tiết từng chất lượng
         },
         
         'stats': {
@@ -271,6 +271,40 @@ def upload_video():
         'message': 'Video đã được tải lên, đang xử lý chuyển đổi HLS'
     }), 201
 
+@app.route('/api/videos/<video_id>/status', methods=['GET'])
+@jwt_required()
+def check_video_status(video_id):
+    user_id = get_jwt_identity()
+    
+    # Tìm video
+    try:
+        video = videos_collection.find_one({'_id': ObjectId(video_id)})
+    except:
+        video = videos_collection.find_one({'videoId': video_id})
+    
+    if not video:
+        return jsonify({'success': False, 'message': 'Không tìm thấy video'}), 404
+    
+    # Kiểm tra quyền sở hữu
+    if str(video['userId']) != user_id:
+        return jsonify({'success': False, 'message': 'Bạn không có quyền truy cập video này'}), 403
+    
+    # Trả về thông tin trạng thái
+    status_info = {
+        'videoId': str(video['_id']),
+        'status': video['status'],
+        'progress': video['processingDetails']['progress'] if 'processingDetails' in video else 0,
+        'currentStep': video['processingDetails'].get('currentStep', 'Đang xử lý') if 'processingDetails' in video else 'Đang xử lý',
+        'error': video['processingDetails'].get('error', None) if 'processingDetails' in video else None,
+        'thumbnail': video.get('thumbnailPath', None),
+        'duration': video.get('duration', 0)
+    }
+    
+    return jsonify({
+        'success': True,
+        'statusInfo': status_info
+    })
+
 # API lấy danh sách video của người dùng hiện tại
 @app.route('/api/videos/my', methods=['GET'])
 @jwt_required()
@@ -279,7 +313,7 @@ def get_my_videos():
     
     # Tham số phân trang
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 20))
     skip = (page - 1) * limit
     
     # Lấy tổng số video
@@ -310,7 +344,7 @@ def get_my_videos():
 def get_public_videos():
     # Tham số phân trang
     page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 100))
     skip = (page - 1) * limit
     
     # Lấy tổng số video công khai và đã sẵn sàng
@@ -468,7 +502,7 @@ def get_video(video_id):
         'avatar': uploader['avatar'],
         'subscriberCount': uploader['stats']['subscriberCount']
     }
-    
+   
     # Lấy 5 bình luận mới nhất
     recent_comments = list(comments_collection.find(
         {'videoId': ObjectId(video['_id']), 'parentId': None}
@@ -491,37 +525,50 @@ def get_video(video_id):
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
             try:
-                user_id = get_jwt_identity()
+                token = auth_header.split(' ')[1]
+        
+                from jwt import decode
+                decoded = decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+                user_id = decoded.get('sub')
             except:
                 pass
-        
+       
+        is_video_owner = False
+        if user_id and str(video['userId']) == user_id or user_id == None:
+            is_video_owner = True
+
+        print(video['userId'])
+        print(user_id)
+        print(f"Is video owner: {is_video_owner}")
+
         # Lưu lượt xem
-        view_record = {
-            'videoId': ObjectId(video['_id']),
-            'userId': ObjectId(user_id) if user_id else None,
-            'ip': request.remote_addr,
-            'userAgent': request.headers.get('User-Agent', ''),
-            'watchDuration': 0,  # Sẽ được cập nhật sau
-            'watchedAt': datetime.datetime.now(),
-            'completionRate': 0  # Sẽ được cập nhật sau
-        }
-        views_collection.insert_one(view_record)
-        
-        # Tăng lượt xem
-        videos_collection.update_one(
-            {'_id': ObjectId(video['_id'])},
-            {'$inc': {
-                'stats.views': 1,
-                'stats.viewsLastHour': 1,
-                'stats.viewsLast24Hours': 1,
-                'stats.viewsLastWeek': 1
-            }}
-        )
-        
-        # Cập nhật tổng lượt xem cho người dùng
-        users_collection.update_one(
-            {'_id': ObjectId(video['userId'])},
-            {'$inc': {'stats.totalViews': 1}}
+        if not is_video_owner:
+            view_record = {
+                'videoId': ObjectId(video['_id']),
+                'userId': ObjectId(user_id) if user_id else None,
+                'ip': request.remote_addr,
+                'userAgent': request.headers.get('User-Agent', ''),
+                'watchDuration': 0,  # Sẽ được cập nhật sau
+                'watchedAt': datetime.datetime.now(),
+                'completionRate': 0  # Sẽ được cập nhật sau
+            }
+            views_collection.insert_one(view_record)
+            
+            # Tăng lượt xem
+            videos_collection.update_one(
+                {'_id': ObjectId(video['_id'])},
+                {'$inc': {
+                    'stats.views': 0.5,
+                    'stats.viewsLastHour': 0.5,
+                    'stats.viewsLast24Hours': 0.5,
+                    'stats.viewsLastWeek': 0.5
+                }}
+            )
+            
+            # Cập nhật tổng lượt xem cho người dùng
+            users_collection.update_one(
+                {'_id': ObjectId(video['userId'])},
+                {'$inc': {'stats.totalViews': 1}}
         )
     except Exception as e:
         print(f"Lỗi khi ghi lượt xem: {e}")

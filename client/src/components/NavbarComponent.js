@@ -35,17 +35,14 @@ const NavbarComponent = () => {
       <Container>
         <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
           <FaVideo className="me-2" />
-          <span>HLS Video</span>
+          <span>HLS Video Player</span>
         </Navbar.Brand>
         
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
-            <Nav.Link as={Link} to="/">Trang chủ</Nav.Link>
-          </Nav>
           
-          <Form className="d-flex mx-auto" style={{ maxWidth: '500px' }} onSubmit={handleSearch}>
+          <Form className="d-flex mx-auto" style={{ width: '650px' }} onSubmit={handleSearch}>
             <InputGroup>
               <Form.Control 
                 type="search" 
@@ -100,10 +97,10 @@ const NavbarComponent = () => {
                       <FaVideo className="me-2" />
                       Video của tôi
                     </Dropdown.Item>
-                    <Dropdown.Item as={Link} to="/settings">
+                    {/* <Dropdown.Item as={Link} to="/settings">
                       <FaCog className="me-2" />
                       Cài đặt
-                    </Dropdown.Item>
+                    </Dropdown.Item> */}
                     <Dropdown.Divider />
                     <Dropdown.Item onClick={handleLogout}>
                       <FaSignOutAlt className="me-2" />

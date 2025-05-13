@@ -171,7 +171,7 @@ const Home = () => {
   return (
     <div>
       {/* Thanh tìm kiếm */}
-      <Form onSubmit={handleSearch} className="mb-4">
+      {/* <Form onSubmit={handleSearch} className="mb-4">
         <InputGroup>
           <Form.Control
             placeholder="Tìm kiếm video..."
@@ -182,7 +182,7 @@ const Home = () => {
             <FaSearch /> Tìm kiếm
           </Button>
         </InputGroup>
-      </Form>
+      </Form> */}
       
       {/* Thanh danh mục */}
       <div className="d-flex flex-wrap mb-4">
