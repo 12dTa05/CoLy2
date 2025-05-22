@@ -7,23 +7,23 @@ import { toast } from 'react-toastify';
 import { getPublicVideos } from '../api';
 import VideoCard from '../components/VideoCard';
 
-const CATEGORIES = [
-  'Tất cả',
-  'Âm nhạc',
-  'Trò chơi', 
-  'Tin tức',
-  'Thể thao',
-  'Giải trí',
-  'Giáo dục',
-  'Khoa học & Công nghệ',
-  'Du lịch',
-  'Đời sống',
-  'Thời trang',
-  'Phim ảnh',
-  'Lịch sử',
-  'Nấu ăn',
-  'Sức khỏe'
-];
+// const CATEGORIES = [
+//   'Tất cả',
+//   'Âm nhạc',
+//   'Trò chơi', 
+//   'Tin tức',
+//   'Thể thao',
+//   'Giải trí',
+//   'Giáo dục',
+//   'Khoa học & Công nghệ',
+//   'Du lịch',
+//   'Đời sống',
+//   'Thời trang',
+//   'Phim ảnh',
+//   'Lịch sử',
+//   'Nấu ăn',
+//   'Sức khỏe'
+// ];
 
 const Home = () => {
   const [searchParams] = useSearchParams();
@@ -63,15 +63,15 @@ const Home = () => {
     fetchVideos();
   }, [page]);
   
-  // Xử lý chọn danh mục
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    if (category === 'Tất cả') {
-      navigate('/');
-    } else {
-      navigate(`/search?category=${encodeURIComponent(category)}`);
-    }
-  };
+  // // Xử lý chọn danh mục
+  // const handleCategorySelect = (category) => {
+  //   setSelectedCategory(category);
+  //   if (category === 'Tất cả') {
+  //     navigate('/');
+  //   } else {
+  //     navigate(`/search?category=${encodeURIComponent(category)}`);
+  //   }
+  // };
   
   // Hàm tạo mảng phân trang
   const getPaginationItems = () => {
@@ -171,7 +171,7 @@ const Home = () => {
   return (
     <div className="home-page">
       {/* Category Bar - Sticky */}
-      <div 
+      {/* <div 
         className="category-bar bg-white border-bottom"
         style={{
           position: 'sticky',
@@ -201,7 +201,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
       
       {/* Video Grid */}
       <div className="video-grid" style={{ padding: '24px' }}>

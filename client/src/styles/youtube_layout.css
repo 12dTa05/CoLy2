@@ -1,0 +1,288 @@
+/* youtube-layout.css - Additional styling cho YouTube layout */
+
+/* General Layout */
+body {
+  background-color: #f9f9f9;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Navbar adjustments */
+.navbar-dark {
+  background-color: #212121 !important;
+  border-bottom: 1px solid #333;
+}
+
+.navbar-brand {
+  font-weight: 500;
+  font-size: 20px;
+}
+
+/* Category Bar */
+.category-bar {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.category-bar::-webkit-scrollbar {
+  height: 0;
+  background: transparent;
+}
+
+.category-bar .btn {
+  white-space: nowrap;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  background: #f2f2f2;
+  color: #0f0f0f;
+  transition: all 0.2s ease;
+}
+
+.category-bar .btn:hover {
+  border-color: #909090;
+  background: #e5e5e5;
+}
+
+.category-bar .btn-dark {
+  background: #0f0f0f !important;
+  border-color: #0f0f0f !important;
+  color: white !important;
+}
+
+.category-bar .btn-dark:hover {
+  background: #272727 !important;
+  border-color: #272727 !important;
+}
+
+/* Video Grid */
+.video-grid {
+  background-color: #f9f9f9;
+}
+
+/* Video Card Styling */
+.video-card {
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.video-card:hover {
+  transform: translateY(-2px);
+}
+
+.video-card .thumbnail-container {
+  background: #f0f0f0;
+  position: relative;
+}
+
+.video-card .thumbnail-container::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.video-card:hover .thumbnail-container::before {
+  opacity: 0.1;
+}
+
+.video-card .video-title {
+  transition: color 0.2s ease;
+}
+
+.video-card:hover .video-title {
+  color: #065fd4;
+}
+
+.video-card .channel-name:hover {
+  color: #0f0f0f;
+}
+
+/* Search Results */
+.search-results .video-card {
+  margin-bottom: 1rem;
+}
+
+/* My Videos Table */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+/* Upload Page */
+.upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+  border-color: #1976d2;
+  background: #f5f5f5;
+}
+
+.upload-area.drag-over {
+  border-color: #1976d2;
+  background: #e3f2fd;
+}
+
+/* Video Player Page */
+.video-player-container {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.video-description {
+  background: #f2f2f2;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* Comments Section */
+.comment-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 1rem 0;
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .video-grid {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 992px) {
+  .category-bar {
+    padding: 8px 16px;
+  }
+  
+  .video-grid {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .category-bar {
+    padding: 8px 12px;
+  }
+  
+  .video-grid {
+    padding: 8px;
+  }
+  
+  .video-card .video-info {
+    padding: 0 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .category-bar .btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  
+  .video-card .thumbnail-container {
+    border-radius: 8px;
+  }
+  
+  .video-card .video-title {
+    font-size: 13px;
+    line-height: 18px;
+  }
+  
+  .video-card .channel-name,
+  .video-card .video-stats {
+    font-size: 11px;
+  }
+}
+
+/* Loading and Error States */
+.loading-container {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Pagination */
+.pagination-container {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 2rem;
+  margin-top: 2rem;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Focus states for accessibility */
+.btn:focus,
+.form-control:focus,
+.nav-link:focus {
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+  outline: none;
+}
+
+/* Custom dropdown styling */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Toast notifications */
+.Toastify__toast {
+  border-radius: 8px;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

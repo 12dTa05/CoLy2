@@ -12,7 +12,7 @@ import './styles/sidebar.css';
 import NavbarComponent from './components/NavbarComponent';
 import Sidebar from './components/SideBar';
 import PrivateRoute from './components/PrivateRoute';
-import Footer from './components/Footer';
+// import Footer from './components/Footer';
 
 // Pages
 import Home from './pages/Home';
@@ -222,7 +222,7 @@ function App() {
               </div>
               
               {/* Footer */}
-              <Footer />
+              {/* <Footer /> */}
             </main>
           </div>
         </div>
