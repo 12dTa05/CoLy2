@@ -1,25 +1,28 @@
-// Home.js
+// Home.js - Updated với YouTube-style layout
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Button, Form, InputGroup, Alert, Spinner } from 'react-bootstrap';
+import { Row, Col, Button, Alert, Spinner } from 'react-bootstrap';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { FaSearch, FaEye, FaClock } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
-import { getPublicVideos, getHLSUrl, getThumbnailUrl } from '../api';
+import { getPublicVideos } from '../api';
 import VideoCard from '../components/VideoCard';
 
 const CATEGORIES = [
   'Tất cả',
-  'Giáo dục',
-  'Giải trí',
   'Âm nhạc',
-  'Thể thao',
+  'Trò chơi', 
   'Tin tức',
-  'Trò chơi',
+  'Thể thao',
+  'Giải trí',
+  'Giáo dục',
   'Khoa học & Công nghệ',
   'Du lịch',
   'Đời sống',
-  'Thời trang'
+  'Thời trang',
+  'Phim ảnh',
+  'Lịch sử',
+  'Nấu ăn',
+  'Sức khỏe'
 ];
 
 const Home = () => {
@@ -32,13 +35,12 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
-  const [searchQuery, setSearchQuery] = useState('');
   
   // Lấy query từ URL nếu có
   useEffect(() => {
-    const query = searchParams.get('q');
-    if (query) {
-      setSearchQuery(query);
+    const category = searchParams.get('category');
+    if (category) {
+      setSelectedCategory(category);
     }
   }, [searchParams]);
   
@@ -47,7 +49,7 @@ const Home = () => {
     const fetchVideos = async () => {
       try {
         setLoading(true);
-        const response = await getPublicVideos(page, 12);
+        const response = await getPublicVideos(page, 24); // Tăng số lượng video để phù hợp với grid
         setVideos(response.data.videos);
         setTotalPages(response.data.pages);
       } catch (err) {
@@ -60,14 +62,6 @@ const Home = () => {
     
     fetchVideos();
   }, [page]);
-  
-  // Xử lý tìm kiếm
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
   
   // Xử lý chọn danh mục
   const handleCategorySelect = (category) => {
@@ -143,7 +137,7 @@ const Home = () => {
   // Hiển thị trạng thái loading
   if (loading && page === 1) {
     return (
-      <div className="text-center py-5">
+      <div className="d-flex justify-content-center align-items-center py-5">
         <Spinner animation="border" role="status">
           <span className="visually-hidden">Đang tải...</span>
         </Spinner>
@@ -153,66 +147,87 @@ const Home = () => {
   
   // Hiển thị lỗi
   if (error && videos.length === 0) {
-    return <Alert variant="danger">{error}</Alert>;
+    return (
+      <div className="container py-4">
+        <Alert variant="danger">{error}</Alert>
+      </div>
+    );
   }
   
   // Hiển thị khi không có video
   if (!loading && videos.length === 0) {
     return (
-      <div className="text-center py-5">
-        <Alert variant="info">
-          Chưa có video nào được đăng tải. Hãy là người đầu tiên 
-          <Link to="/upload" className="ms-1">tải lên video</Link>!
-        </Alert>
+      <div className="container py-4">
+        <div className="text-center py-5">
+          <Alert variant="info" className="d-inline-block">
+            Chưa có video nào được đăng tải. Hãy là người đầu tiên 
+            <Link to="/upload" className="ms-1">tải lên video</Link>!
+          </Alert>
+        </div>
       </div>
     );
   }
   
   return (
-    <div>
-      {/* Thanh tìm kiếm */}
-      {/* <Form onSubmit={handleSearch} className="mb-4">
-        <InputGroup>
-          <Form.Control
-            placeholder="Tìm kiếm video..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Button variant="primary" type="submit">
-            <FaSearch /> Tìm kiếm
-          </Button>
-        </InputGroup>
-      </Form> */}
-      
-      {/* Thanh danh mục */}
-      <div className="d-flex flex-wrap mb-4">
-        {CATEGORIES.map(category => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "primary" : "outline-secondary"}
-            className="me-2 mb-2"
-            onClick={() => handleCategorySelect(category)}
-          >
-            {category}
-          </Button>
-        ))}
+    <div className="home-page">
+      {/* Category Bar - Sticky */}
+      <div 
+        className="category-bar bg-white border-bottom"
+        style={{
+          position: 'sticky',
+          top: '56px',
+          zIndex: 1000,
+          padding: '12px 24px'
+        }}
+      >
+        <div className="d-flex overflow-auto">
+          <div className="d-flex flex-nowrap">
+            {CATEGORIES.map((category, index) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "dark" : "outline-secondary"}
+                size="sm"
+                className={`me-2 flex-shrink-0 ${index === 0 ? 'ms-0' : ''}`}
+                onClick={() => handleCategorySelect(category)}
+                style={{
+                  borderRadius: '8px',
+                  fontWeight: selectedCategory === category ? '500' : '400',
+                  whiteSpace: 'nowrap',
+                  padding: '6px 12px'
+                }}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
       
-      {/* Danh sách video */}
-      <Row xs={1} md={2} lg={3} xl={4} className="g-4 mb-4">
-        {videos.map(video => (
-          <Col key={video._id}>
-            <VideoCard video={video} />
-          </Col>
-        ))}
-      </Row>
-      
-      {/* Phân trang */}
-      {totalPages > 1 && (
-        <div className="d-flex justify-content-center mt-4">
-          {getPaginationItems()}
-        </div>
-      )}
+      {/* Video Grid */}
+      <div className="video-grid" style={{ padding: '24px' }}>
+        <Row className="g-4">
+          {videos.map(video => (
+            <Col 
+              key={video._id}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              xl={3}
+              xxl={2}
+            >
+              <VideoCard video={video} />
+            </Col>
+          ))}
+        </Row>
+        
+        {/* Phân trang */}
+        {totalPages > 1 && (
+          <div className="d-flex justify-content-center mt-5 pt-4">
+            {getPaginationItems()}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,13 +1,13 @@
-// NavbarComponent.js
+// NavbarComponent.js - Updated với hamburger menu
 import React, { useState, useContext } from 'react';
 import { Navbar, Container, Nav, Button, Form, InputGroup, Dropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaUser, FaUpload, FaSignOutAlt, FaVideo, FaCog } from 'react-icons/fa';
+import { FaSearch, FaUser, FaUpload, FaSignOutAlt, FaVideo, FaCog, FaBars } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 import AuthContext from '../context/AuthContext';
 
-const NavbarComponent = () => {
+const NavbarComponent = ({ onToggleSidebar }) => {
   const { currentUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   
@@ -31,18 +31,39 @@ const NavbarComponent = () => {
   };
   
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="sticky-top">
-      <Container>
-        <Navbar.Brand as={Link} to="/" className="d-flex align-items-center">
-          <FaVideo className="me-2" />
-          <span>HLS Video Player</span>
-        </Navbar.Brand>
-        
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        
-        <Navbar.Collapse id="basic-navbar-nav">
+    <Navbar bg="dark" variant="dark" expand="lg" className="sticky-top" style={{ height: '56px' }}>
+      <Container fluid className="px-3">
+        <div className="d-flex align-items-center">
+          {/* Hamburger Menu Button */}
+          <Button
+            variant="link"
+            className="text-white p-2 me-3 d-flex align-items-center justify-content-center"
+            onClick={onToggleSidebar}
+            style={{ 
+              width: '40px', 
+              height: '40px',
+              border: 'none',
+              borderRadius: '50%'
+            }}
+          >
+            <FaBars size={16} />
+          </Button>
           
-          <Form className="d-flex mx-auto" style={{ width: '650px' }} onSubmit={handleSearch}>
+          {/* Logo */}
+          <Navbar.Brand as={Link} to="/" className="d-flex align-items-center me-4">
+            <FaVideo className="me-2" />
+            <span className="d-none d-md-inline">HLS Video Player</span>
+            <span className="d-md-none">HLS</span>
+          </Navbar.Brand>
+        </div>
+        
+        {/* Search Bar - Centered */}
+        <div className="flex-grow-1 d-flex justify-content-center">
+          <Form 
+            className="d-flex" 
+            style={{ width: '100%', maxWidth: '600px' }} 
+            onSubmit={handleSearch}
+          >
             <InputGroup>
               <Form.Control 
                 type="search" 
@@ -50,73 +71,145 @@ const NavbarComponent = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-dark text-white border-secondary"
+                style={{
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0,
+                  borderRight: 'none'
+                }}
               />
-              <Button variant="outline-light" type="submit">
+              <Button 
+                variant="outline-light" 
+                type="submit"
+                className="d-flex align-items-center justify-content-center"
+                style={{
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+                  borderLeft: 'none',
+                  minWidth: '64px'
+                }}
+              >
                 <FaSearch />
               </Button>
             </InputGroup>
           </Form>
-          
-          <Nav>
-            {currentUser ? (
-              <>
-                <Button 
-                  as={Link} 
-                  to="/upload" 
-                  variant="outline-light" 
-                  className="me-2 d-flex align-items-center"
+        </div>
+        
+        {/* Right Side Actions */}
+        <div className="d-flex align-items-center ms-3">
+          {currentUser ? (
+            <>
+              {/* Upload Button */}
+              <Button 
+                as={Link} 
+                to="/upload" 
+                variant="link" 
+                className="text-white p-2 me-2 d-flex align-items-center justify-content-center"
+                style={{ 
+                  width: '40px', 
+                  height: '40px',
+                  border: 'none',
+                  borderRadius: '50%'
+                }}
+                title="Tải lên video"
+              >
+                <FaUpload size={16} />
+              </Button>
+              
+              {/* User Dropdown */}
+              <Dropdown align="end">
+                <Dropdown.Toggle 
+                  variant="link" 
+                  id="dropdown-user" 
+                  className="p-0 d-flex align-items-center border-0"
+                  style={{ backgroundColor: 'transparent' }}
                 >
-                  <FaUpload className="me-md-1" />
-                  <span className="d-none d-md-inline">Tải lên</span>
-                </Button>
+                  {currentUser.avatar ? (
+                    <img 
+                      src={currentUser.avatar} 
+                      alt={currentUser.displayName} 
+                      className="rounded-circle" 
+                      width="32" 
+                      height="32" 
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div 
+                      className="rounded-circle bg-secondary d-flex align-items-center justify-content-center" 
+                      style={{ width: '32px', height: '32px' }}
+                    >
+                      <FaUser size={16} color="white" />
+                    </div>
+                  )}
+                </Dropdown.Toggle>
                 
-                <Dropdown align="end">
-                  <Dropdown.Toggle 
-                    variant="link" 
-                    id="dropdown-user" 
-                    className="nav-link text-light p-0 d-flex align-items-center"
-                  >
-                    {currentUser.avatar ? (
-                      <img 
-                        src={currentUser.avatar} 
-                        alt={currentUser.displayName} 
-                        className="rounded-circle me-1" 
-                        width="32" 
-                        height="32" 
-                      />
-                    ) : (
-                      <div className="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-1" style={{ width: '32px', height: '32px' }}>
-                        <FaUser size={16} />
+                <Dropdown.Menu className="dropdown-menu-end">
+                  <Dropdown.Header>
+                    <div className="d-flex align-items-center">
+                      {currentUser.avatar ? (
+                        <img 
+                          src={currentUser.avatar} 
+                          alt={currentUser.displayName} 
+                          className="rounded-circle me-2" 
+                          width="40" 
+                          height="40" 
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div 
+                          className="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                          style={{ width: '40px', height: '40px' }}
+                        >
+                          <FaUser size={20} color="white" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="fw-bold">{currentUser.displayName}</div>
+                        <small className="text-muted">@{currentUser.username}</small>
                       </div>
-                    )}
-                    <span className="d-none d-md-inline">{currentUser.displayName}</span>
-                  </Dropdown.Toggle>
+                    </div>
+                  </Dropdown.Header>
                   
-                  <Dropdown.Menu>
-                    <Dropdown.Item as={Link} to="/my-videos">
-                      <FaVideo className="me-2" />
-                      Video của tôi
-                    </Dropdown.Item>
-                    {/* <Dropdown.Item as={Link} to="/settings">
-                      <FaCog className="me-2" />
-                      Cài đặt
-                    </Dropdown.Item> */}
-                    <Dropdown.Divider />
-                    <Dropdown.Item onClick={handleLogout}>
-                      <FaSignOutAlt className="me-2" />
-                      Đăng xuất
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
-              </>
-            ) : (
-              <>
-                <Nav.Link as={Link} to="/login" className="me-2">Đăng nhập</Nav.Link>
-                <Button as={Link} to="/register" variant="primary">Đăng ký</Button>
-              </>
-            )}
-          </Nav>
-        </Navbar.Collapse>
+                  <Dropdown.Divider />
+                  
+                  <Dropdown.Item as={Link} to="/my-videos">
+                    <FaVideo className="me-2" />
+                    Video của tôi
+                  </Dropdown.Item>
+                  
+                  <Dropdown.Item as={Link} to="/settings">
+                    <FaCog className="me-2" />
+                    Cài đặt
+                  </Dropdown.Item>
+                  
+                  <Dropdown.Divider />
+                  
+                  <Dropdown.Item onClick={handleLogout}>
+                    <FaSignOutAlt className="me-2" />
+                    Đăng xuất
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            </>
+          ) : (
+            <>
+              <Nav.Link 
+                as={Link} 
+                to="/login" 
+                className="text-white me-2 px-3 py-2"
+              >
+                Đăng nhập
+              </Nav.Link>
+              <Button 
+                as={Link} 
+                to="/register" 
+                variant="primary" 
+                className="px-3 py-2"
+              >
+                Đăng ký
+              </Button>
+            </>
+          )}
+        </div>
       </Container>
     </Navbar>
   );

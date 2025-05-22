@@ -1,5 +1,5 @@
 client/node_modules/
-clinet/build
+client/package-lock.json
 
 server/hls/
 server/thumbnails
