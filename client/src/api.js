@@ -186,6 +186,31 @@ export const getChannelVideos = (channelId, page = 1, limit = 20) => {
   return api.get(`/channels/${channelId}/videos?page=${page}&limit=${limit}`);
 };
 
+// API lấy trạng thái tương tác của user với video
+export const getVideoUserStatus = (videoId) => {
+  return api.get(`/videos/${videoId}/user-status`);
+};
+
+// API cập nhật video
+export const updateVideo = (videoId, data) => {
+  return api.put(`/videos/${videoId}`, data);
+};
+
+// API xóa video
+export const deleteVideo = (videoId) => {
+  return api.delete(`/videos/${videoId}`);
+};
+
+// API lấy video trending
+export const getTrendingVideos = (page = 1, limit = 20) => {
+  return api.get(`/videos/trending?page=${page}&limit=${limit}`);
+};
+
+// API lấy video đề xuất
+export const getRecommendedVideos = (page = 1, limit = 20) => {
+  return api.get(`/videos/recommended?page=${page}&limit=${limit}`);
+};
+
 // Helpers
 export const getHLSUrl = (videoPath) => {
   return `http://localhost:8000/${videoPath}`;

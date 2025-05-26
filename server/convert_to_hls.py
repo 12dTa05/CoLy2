@@ -95,6 +95,7 @@ def convert_to_hls(video_path, output_dir, thumbnail_path, video_id):
         
         # Chuyển đổi video sang HLS sử dụng FFmpeg
         resolutions = [
+            ('144p', '256x144', '250k', '48k'),
             ('240p', '426x240', '400k', '64k'),
             ('360p', '640x360', '700k', '96k'),
             ('480p', '854x480', '1000k', '128k'),

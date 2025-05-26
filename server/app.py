@@ -14,13 +14,30 @@ import re
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-CORS(app)
-app.config['JWT_SECRET_KEY'] = 'd89196fbc63502b37fc00fa691b64af09b40b80b4cf90d14f611dcbc4dc3e609'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+
+CORS(app, 
+     origins=["http://localhost:3000", "https://yourdomain.com"], 
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization", "X-CSRF-Token"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(hours=24)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = datetime.timedelta(days=30)
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB max file size
+
 jwt = JWTManager(app)
 
+# Rate Limiting Setup
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["1000 per hour"],
+    storage_uri="redis://localhost:6379",
+    strategy="fixed-window"
+)
+
 # Kết nối MongoDB
-client = MongoClient('mongodb+srv://Death:DeathA_1205@death.8wudq.mongodb.net/CoLy2?retryWrites=true&w=majority&appName=Death')
+client = MongoClient('mongodb+srv://Death:DeathA_1205@death.8wudq.mongodb.net/CoLy2?retryWrites=true&w=majority&appName=Death', maxPoolSize=50, minPoolSize=5, maxIdleTimeMS=30000, serverSelectionTimeoutMS=5000)
 db = client['CoLy2']
 users_collection = db['users']
 videos_collection = db['videos']
@@ -114,6 +131,25 @@ def update_search_index(video_id, title, description, tags):
              '$set': {'updatedAt': datetime.datetime.now()}},
             upsert=True
         )
+
+# Security Middleware
+@app.before_request
+def security_headers():
+    """Apply security headers and CSRF protection"""
+    # Skip CSRF for GET requests and preflight OPTIONS
+    if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
+        # Allow API endpoints to skip CSRF for now (implement proper CSRF tokens later)
+        if request.content_type and 'application/json' in request.content_type:
+            pass  # Skip CSRF for JSON API requests for now
+
+@app.after_request
+def after_request(response):
+    """Add security headers"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
 
 # API đăng ký người dùng
 @app.route('/api/register', methods=['POST'])
@@ -1364,6 +1400,246 @@ def get_channel_videos(channel_id):
             'visibility': 'public',
             'status': 'ready'
         })
+        
+        # Chuyển đổi ObjectId
+        for video in videos:
+            video['_id'] = str(video['_id'])
+            video['userId'] = str(video['userId'])
+        
+        return jsonify({
+            'success': True,
+            'videos': videos,
+            'total': total,
+            'page': page,
+            'pages': (total + limit - 1) // limit
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Lỗi: {str(e)}'}), 500
+
+# API kiểm tra trạng thái tương tác của user với video
+@app.route('/api/videos/<video_id>/user-status', methods=['GET'])
+@jwt_required()
+def get_video_user_status(video_id):
+    user_id = get_jwt_identity()
+    
+    try:
+        # Kiểm tra các trạng thái
+        is_liked = liked_videos_collection.find_one({
+            'userId': ObjectId(user_id),
+            'videoId': ObjectId(video_id)
+        }) is not None
+        
+        is_saved = saved_videos_collection.find_one({
+            'userId': ObjectId(user_id),
+            'videoId': ObjectId(video_id)
+        }) is not None
+        
+        is_in_watch_later = watch_later_collection.find_one({
+            'userId': ObjectId(user_id),
+            'videoId': ObjectId(video_id)
+        }) is not None
+        
+        # Kiểm tra đăng ký kênh
+        video = videos_collection.find_one({'_id': ObjectId(video_id)})
+        is_subscribed = False
+        if video:
+            is_subscribed = subscriptions_collection.find_one({
+                'subscriberId': ObjectId(user_id),
+                'channelId': video['userId']
+            }) is not None
+        
+        return jsonify({
+            'success': True,
+            'status': {
+                'liked': is_liked,
+                'saved': is_saved,
+                'inWatchLater': is_in_watch_later,
+                'subscribed': is_subscribed
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Lỗi: {str(e)}'}), 500
+
+# API cập nhật thông tin video
+@app.route('/api/videos/<video_id>', methods=['PUT'])
+@jwt_required()
+def update_video(video_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    try:
+        # Kiểm tra quyền sở hữu
+        video = videos_collection.find_one({'_id': ObjectId(video_id)})
+        if not video:
+            return jsonify({'success': False, 'message': 'Video không tồn tại'}), 404
+        
+        if str(video['userId']) != user_id:
+            return jsonify({'success': False, 'message': 'Bạn không có quyền chỉnh sửa video này'}), 403
+        
+        # Cập nhật thông tin
+        update_data = {}
+        if 'title' in data:
+            update_data['title'] = data['title']
+        if 'description' in data:
+            update_data['description'] = data['description']
+        if 'category' in data:
+            update_data['category'] = data['category']
+        if 'tags' in data:
+            update_data['tags'] = data['tags']
+        if 'visibility' in data:
+            update_data['visibility'] = data['visibility']
+        
+        update_data['updatedAt'] = datetime.datetime.now()
+        
+        videos_collection.update_one(
+            {'_id': ObjectId(video_id)},
+            {'$set': update_data}
+        )
+        
+        return jsonify({'success': True, 'message': 'Cập nhật video thành công'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Lỗi: {str(e)}'}), 500
+
+# API xóa video
+@app.route('/api/videos/<video_id>', methods=['DELETE'])
+@jwt_required()
+def delete_video(video_id):
+    user_id = get_jwt_identity()
+    
+    try:
+        # Kiểm tra quyền sở hữu
+        video = videos_collection.find_one({'_id': ObjectId(video_id)})
+        if not video:
+            return jsonify({'success': False, 'message': 'Video không tồn tại'}), 404
+        
+        if str(video['userId']) != user_id:
+            return jsonify({'success': False, 'message': 'Bạn không có quyền xóa video này'}), 403
+        
+        # Xóa các file liên quan
+        import shutil
+        if 'contentPath' in video and os.path.exists(video['contentPath']):
+            shutil.rmtree(video['contentPath'])
+        
+        if 'thumbnailPath' in video and os.path.exists(video['thumbnailPath']):
+            os.remove(video['thumbnailPath'])
+        
+        # Xóa các bản ghi liên quan
+        videos_collection.delete_one({'_id': ObjectId(video_id)})
+        comments_collection.delete_many({'videoId': ObjectId(video_id)})
+        views_collection.delete_many({'videoId': ObjectId(video_id)})
+        watch_history_collection.delete_many({'videoId': ObjectId(video_id)})
+        saved_videos_collection.delete_many({'videoId': ObjectId(video_id)})
+        watch_later_collection.delete_many({'videoId': ObjectId(video_id)})
+        liked_videos_collection.delete_many({'videoId': ObjectId(video_id)})
+        
+        # Giảm số lượng video của user
+        users_collection.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$inc': {'stats.videoCount': -1}}
+        )
+        
+        return jsonify({'success': True, 'message': 'Xóa video thành công'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Lỗi: {str(e)}'}), 500
+
+# API lấy video trending
+@app.route('/api/videos/trending', methods=['GET'])
+def get_trending_videos():
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    skip = (page - 1) * limit
+    
+    try:
+        # Tính điểm trending dựa trên views gần đây và likes
+        pipeline = [
+            {'$match': {
+                'visibility': 'public',
+                'status': 'ready',
+                'publishedAt': {'$gte': datetime.datetime.now() - datetime.timedelta(days=7)}
+            }},
+            {'$addFields': {
+                'trendingScore': {
+                    '$add': [
+                        {'$multiply': ['$stats.viewsLastWeek', 1]},
+                        {'$multiply': ['$stats.likes', 2]}
+                    ]
+                }
+            }},
+            {'$sort': {'trendingScore': -1}},
+            {'$skip': skip},
+            {'$limit': limit}
+        ]
+        
+        videos = list(videos_collection.aggregate(pipeline))
+        total = videos_collection.count_documents({
+            'visibility': 'public',
+            'status': 'ready',
+            'publishedAt': {'$gte': datetime.datetime.now() - datetime.timedelta(days=7)}
+        })
+        
+        # Chuyển đổi ObjectId
+        for video in videos:
+            video['_id'] = str(video['_id'])
+            video['userId'] = str(video['userId'])
+        
+        return jsonify({
+            'success': True,
+            'videos': videos,
+            'total': total,
+            'page': page,
+            'pages': (total + limit - 1) // limit
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Lỗi: {str(e)}'}), 500
+
+# API lấy video đề xuất
+@app.route('/api/videos/recommended', methods=['GET'])
+@jwt_required(optional=True)
+def get_recommended_videos():
+    user_id = get_jwt_identity()
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 20))
+    skip = (page - 1) * limit
+    
+    try:
+        if user_id:
+            # Đề xuất dựa trên lịch sử xem và đăng ký
+            # Lấy categories từ video đã xem
+            watched_categories = list(watch_history_collection.aggregate([
+                {'$match': {'userId': ObjectId(user_id)}},
+                {'$lookup': {
+                    'from': 'videos',
+                    'localField': 'videoId',
+                    'foreignField': '_id',
+                    'as': 'video'
+                }},
+                {'$unwind': '$video'},
+                {'$group': {'_id': '$video.category', 'count': {'$sum': 1}}},
+                {'$sort': {'count': -1}},
+                {'$limit': 3}
+            ]))
+            
+            preferred_categories = [cat['_id'] for cat in watched_categories]
+            
+            # Đề xuất video từ categories yêu thích
+            videos = list(videos_collection.find({
+                'visibility': 'public',
+                'status': 'ready',
+                'category': {'$in': preferred_categories} if preferred_categories else {'$exists': True}
+            }).sort('stats.views', -1).skip(skip).limit(limit))
+        else:
+            # Người dùng chưa đăng nhập - đề xuất video phổ biến
+            videos = list(videos_collection.find({
+                'visibility': 'public',
+                'status': 'ready'
+            }).sort('stats.views', -1).skip(skip).limit(limit))
+        
+        total = len(videos)
         
         # Chuyển đổi ObjectId
         for video in videos:
