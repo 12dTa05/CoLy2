@@ -1,0 +1,228 @@
+/* sidebar.css - YouTube-style Sidebar Styling */
+
+.sidebar {
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16);
+  background-color: #ffffff !important;
+}
+
+.sidebar.hide {
+  transform: translateX(-100%);
+}
+
+.sidebar.show {
+  transform: translateX(0);
+}
+
+.sidebar.collapsed {
+  width: 90px !important;
+}
+
+/* .sidebar.collapsed .sidebar-label {
+  display: none;
+} */
+
+.sidebar.collapsed .sidebar-icon {
+  margin-right: 0 !important;
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar items */
+.sidebar-item {
+  color: #030303 !important;
+  border-radius: 10px;
+  margin: 2px 5px;
+  padding: 4px 8px !important;
+  transition: all 0.2s ease;
+  text-decoration: none !important;
+}
+
+.sidebar-item:hover {
+  background-color: #f2f2f2;
+  color: #030303 !important;
+}
+
+.sidebar-item.active {
+  background-color: #f2f2f2;
+  font-weight: 500;
+}
+
+.sidebar-item.active .sidebar-icon {
+  color: #030303;
+}
+
+.sidebar-icon {
+  color: #606060;
+  transition: color 0.2s ease;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sidebar-item:hover .sidebar-icon,
+.sidebar-item.active .sidebar-icon {
+  color: #030303;
+}
+
+.sidebar-label {
+  font-size: 16px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-item.active .sidebar-label {
+  font-weight: 500;
+}
+
+/* Sidebar sections */
+.sidebar-section {
+  padding: 4px 0;
+}
+
+/* Section headers */
+.sidebar .text-muted.fw-bold {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #606060 !important;
+  margin-bottom: 4px;
+}
+
+/* Dividers */
+.sidebar hr {
+  border-color: #e5e5e5;
+  margin: 12px 16px;
+  opacity: 1;
+}
+
+/* Responsive behavior */
+@media (max-width: 1312px) {
+  .sidebar:not(.hide) {
+    width: 72px !important;
+  }
+  
+  .sidebar:not(.hide) .sidebar-label {
+    display: none;
+  }
+  
+  .sidebar:not(.hide) .sidebar-icon {
+    margin-right: 0 !important;
+  }
+  
+  .sidebar:not(.hide) hr,
+  .sidebar:not(.hide) .text-muted.fw-bold {
+    display: none;
+  }
+}
+
+@media (max-width: 792px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+    z-index: 1050;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Tooltip for collapsed sidebar */
+.sidebar.collapsed .sidebar-item {
+  /* position: relative; */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  gap: 4px;
+  text-align: center;
+}
+
+.sidebar.collapsed .sidebar-icon {
+  margin-right: 0 !important;
+}
+
+.sidebar.collapsed .sidebar-label {
+  font-size: 12px;
+  text-align: center;
+  white-space: normal;
+}
+
+.sidebar.collapsed .sidebar-item:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #616161;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-left: 8px;
+  opacity: 0;
+  animation: tooltipFadeIn 0.2s ease forwards;
+}
+
+
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Main content adjustment */
+.main-content {
+  margin-left: 240px;
+  transition: margin-left 0.2s ease;
+  min-height: calc(100vh - 56px);
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 72px;
+}
+
+.main-content.sidebar-hidden {
+  margin-left: 0;
+}
+
+@media (max-width: 1312px) {
+  .main-content {
+    margin-left: 72px;
+  }
+  
+  .main-content.sidebar-hidden {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 792px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
